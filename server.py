@@ -16,11 +16,32 @@ from config import load_settings
 
 mcp = FastMCP("Telos")
 
+BASE_URL = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "localhost:8000")
+RESOURCE_URL = f"https://{BASE_URL}"
+
 
 @mcp.custom_route("/", methods=["GET"])
 async def _railway_health(request: Request) -> JSONResponse:
     """Liveness probe for Railway (GET /). MCP HTTP endpoint remains at /mcp."""
     return JSONResponse({"status": "ok"})
+
+
+@mcp.custom_route("/.well-known/oauth-protected-resource", methods=["GET"])
+async def _oauth_protected_resource(request: Request) -> JSONResponse:
+    """OAuth discovery: advertise this resource URL (no auth required for this server)."""
+    return JSONResponse({"resource": RESOURCE_URL})
+
+
+@mcp.custom_route("/.well-known/oauth-authorization-server", methods=["GET"])
+async def _oauth_authorization_server(request: Request) -> JSONResponse:
+    """Explicit 404 so clients do not treat this host as an OAuth authorization server."""
+    return JSONResponse({}, status_code=404)
+
+
+@mcp.custom_route("/.well-known/openid-configuration", methods=["GET"])
+async def _openid_configuration(request: Request) -> JSONResponse:
+    """Explicit 404: no OpenID Provider at this host."""
+    return JSONResponse({}, status_code=404)
 
 _TELOS_WRITE_DESC = (
     "Write a memory to Telos shared memory pool. Use this to store insights, "

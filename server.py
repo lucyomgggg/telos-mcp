@@ -154,16 +154,16 @@ if __name__ == "__main__":
         # FastMCP.run() は host/port/allowed_hosts を受け取らないため、設定を mcp.settings に載せる。
         # Host にポート付きの場合は :* パターンで許可（localhost / Railway）。
         _hosts = [
-            "telos-mcp-production.up.railway.app",
-            "telos-mcp-production.up.railway.app:*",
+            BASE_URL,
+            f"{BASE_URL}:*",
             "localhost",
             "localhost:*",
             "127.0.0.1",
             "127.0.0.1:*",
         ]
         _origins = [
-            "https://telos-mcp-production.up.railway.app",
-            "https://telos-mcp-production.up.railway.app:*",
+            f"https://{BASE_URL}",
+            f"https://{BASE_URL}:*",
             "http://localhost:*",
             "http://127.0.0.1:*",
             "http://localhost",

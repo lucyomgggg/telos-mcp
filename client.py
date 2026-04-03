@@ -78,19 +78,17 @@ class TelosClient:
                 detail = _error_detail(e.response)
                 raise ValueError(f"Telos API error: {e.response.status_code} {detail}") from e
 
-            data = r.json()
+            response_data = r.json()
 
-        if isinstance(data, list):
-            raw_hits = data
-        elif isinstance(data, dict) and "hits" in data:
-            raw_hits = data["hits"]
+        if isinstance(response_data, dict):
+            raw_hits = response_data.get("results", [])
+        elif isinstance(response_data, list):
+            raw_hits = response_data
         else:
-            msg = f"Unexpected Telos search response shape: {type(data).__name__}"
-            raise ValueError(msg)
+            raw_hits = []
 
         if not isinstance(raw_hits, list):
-            msg = f"Telos search hits must be a list, got {type(raw_hits).__name__}"
-            raise ValueError(msg)
+            raw_hits = []
 
         normalized: list[dict[str, Any]] = []
         for item in raw_hits:

@@ -7,6 +7,7 @@ import json
 import os
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -123,11 +124,41 @@ def _parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = _parse_args()
-    if args.transport in ("sse", "streamable-http"):
+    if args.transport == "sse":
         host = args.host
         if host is None:
-            host = "0.0.0.0" if args.transport == "streamable-http" else "127.0.0.1"
+            host = "127.0.0.1"
         mcp.settings = mcp.settings.model_copy(update={"host": host, "port": args.port})
+    elif args.transport == "streamable-http":
+        # FastMCP.run() は host/port/allowed_hosts を受け取らないため、設定を mcp.settings に載せる。
+        # Host にポート付きの場合は :* パターンで許可（localhost / Railway）。
+        _hosts = [
+            "telos-mcp-production.up.railway.app",
+            "telos-mcp-production.up.railway.app:*",
+            "localhost",
+            "localhost:*",
+            "127.0.0.1",
+            "127.0.0.1:*",
+        ]
+        _origins = [
+            "https://telos-mcp-production.up.railway.app",
+            "https://telos-mcp-production.up.railway.app:*",
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "http://localhost",
+            "http://127.0.0.1",
+        ]
+        mcp.settings = mcp.settings.model_copy(
+            update={
+                "host": "0.0.0.0",
+                "port": int(os.environ.get("PORT", 8000)),
+                "transport_security": TransportSecuritySettings(
+                    enable_dns_rebinding_protection=True,
+                    allowed_hosts=_hosts,
+                    allowed_origins=_origins,
+                ),
+            }
+        )
 
     if args.transport == "stdio":
         print(
@@ -150,4 +181,7 @@ if __name__ == "__main__":
             flush=True,
         )
 
-    mcp.run(transport=args.transport)
+    if args.transport == "streamable-http":
+        mcp.run(transport="streamable-http")
+    else:
+        mcp.run(transport=args.transport)

@@ -24,6 +24,16 @@ Your Agent (Claude / MCP Client)
 
 **データの正規処理系は常に `telos-core` に一本化** されており、本アダプタは純粋なトランスポート変換レイヤーとして動作します。
 
+現在の内部構造:
+
+- `server.py`: 互換 entrypoint
+- `telos_mcp/settings.py`: environment 設定
+- `telos_mcp/client.py`: Telos Core REST client
+- `telos_mcp/tools.py`: MCP tool 定義
+- `telos_mcp/server.py`: FastMCP server / route / transport
+
+詳細は [`ARCHITECTURE.md`](./ARCHITECTURE.md) を参照してください。
+
 ---
 
 ## 2. セットアップと起動
@@ -77,7 +87,11 @@ Telosの共有プールに記憶を書き込みます。
 {
   "content": "string (max 8000 chars)",
   "monad_id": "string — your agent's identifier (optional)",
-  "parent_ids": ["optional", "array", "of", "uuids"]
+  "parent_ids": ["optional", "array", "of", "uuids"],
+  "kind": "string — optional record type such as note / patch / test_result",
+  "scope_kind": "string — optional exact filter namespace",
+  "scope_id": "string — optional exact filter identifier",
+  "metadata": { "optional": "JSON object" }
 }
 ```
 
@@ -87,9 +101,14 @@ Telosの共有プールに記憶を書き込みます。
 {
   "query": "string — what you're looking for",
   "monad_id": "string (optional)",
-  "top_k": 5
+  "limit": 5,
+  "top_k": 5,
+  "kind": "string (optional exact filter)",
+  "scope_kind": "string (optional exact filter)",
+  "scope_id": "string (optional exact filter)"
 }
 ```
+`limit` が正規パラメータです。`top_k` は互換目的でのみ受け付けます。
 
 ### `telos_status`
 Telos Coreとの接続状態と到達可能性をチェックします。

@@ -63,7 +63,7 @@ async def main() -> None:
     # 4. telos_search
     print("--- 4. search ---")
     try:
-        hits = await client.search(monad_id="test-monad", query="テスト", top_k=5)
+        hits = await client.search(monad_id="test-monad", query="テスト", limit=5)
         print(f"hits ({len(hits)}): {hits}")
     except Exception as e:
         print(f"Error: {e!r}")

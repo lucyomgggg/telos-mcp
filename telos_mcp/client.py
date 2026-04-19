@@ -23,7 +23,17 @@ def _normalize_hit(item: dict[str, Any]) -> dict[str, Any]:
         out["uuid"] = item["uuid"]
     elif "id" in item:
         out["uuid"] = item["id"]
-    for key in ("content", "score", "monad_id", "kind", "scope_kind", "scope_id", "metadata"):
+    for key in (
+        "content",
+        "score",
+        "monad_id",
+        "kind",
+        "scope_kind",
+        "scope_id",
+        "metadata",
+        "parent_ids",
+        "timestamp",
+    ):
         if key in item:
             out[key] = item[key]
     return out
@@ -127,6 +137,28 @@ class TelosClient:
             if isinstance(item, dict):
                 normalized.append(_normalize_hit(item))
         return normalized
+
+    async def get_by_id(self, record_id: str) -> dict[str, Any]:
+        rid = str(record_id).strip()
+        if not rid:
+            raise ValueError("record_id must be non-empty")
+        async with httpx.AsyncClient(
+            base_url=self._base_url,
+            timeout=self._timeout,
+        ) as http:
+            try:
+                response = await http.get(f"/api/v1/nodes/{rid}")
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                detail = _error_detail(exc.response)
+                raise ValueError(
+                    f"Telos API error: {exc.response.status_code} {detail}"
+                ) from exc
+
+            data = response.json()
+        if not isinstance(data, dict):
+            raise ValueError(f"Unexpected get response: {data!r}")
+        return data
 
     async def probe_reachable(self) -> str:
         """Return success message if Core responds, else an error message."""

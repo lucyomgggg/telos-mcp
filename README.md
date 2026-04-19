@@ -110,6 +110,16 @@ Telosの共有プールに記憶を書き込みます。
 ```
 `limit` が正規パラメータです。`top_k` は互換目的でのみ受け付けます。
 
+各ヒットには `parent_ids` と `timestamp` が含まれます。親を辿る・UUID を確定させるには `telos_get` を使います。
+
+### `telos_get`
+UUID（`telos_write` の戻りや検索ヒットの `uuid`）で **1 件を直接取得**します。ベクトル検索ではなく、`GET /api/v1/nodes/{record_id}` に相当します。
+```json
+{
+  "record_id": "string — memory UUID"
+}
+```
+
 ### `telos_status`
 Telos Coreとの接続状態と到達可能性をチェックします。
 

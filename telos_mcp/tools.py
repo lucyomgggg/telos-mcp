@@ -14,7 +14,13 @@ TELOS_WRITE_DESC = (
 
 TELOS_SEARCH_DESC = (
     "Search Telos shared memory pool using semantic similarity. Returns the most "
-    "relevant memories across all Monads."
+    "relevant memories across all Monads. Each hit includes parent_ids so you can "
+    "fetch those UUIDs with telos_get to walk the graph."
+)
+
+TELOS_GET_DESC = (
+    "Fetch one memory record by its UUID (same id returned by telos_write and in "
+    "search hits). Use to resolve parent_ids or follow citation links."
 )
 
 TELOS_STATUS_DESC = (
@@ -93,6 +99,20 @@ def register_tools(mcp: FastMCP) -> None:
         if not hits:
             return "No results found."
         return json.dumps(hits, ensure_ascii=False)
+
+    @mcp.tool(name="telos_get", description=TELOS_GET_DESC)
+    async def telos_get(record_id: str) -> str:
+        try:
+            settings = load_settings()
+        except ValueError as exc:
+            return _tool_error("Configuration error", exc)
+
+        client = TelosClient(settings.telos_base_url)
+        try:
+            rec = await client.get_by_id(record_id)
+        except Exception as exc:
+            return _tool_error("telos_get failed", exc)
+        return json.dumps(rec, ensure_ascii=False)
 
     @mcp.tool(name="telos_status", description=TELOS_STATUS_DESC)
     async def telos_status() -> str:
